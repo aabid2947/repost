@@ -57,7 +57,7 @@ class GeminiRateLimiter {
         // Wait for the oldest token usage to expire
         const waitTime = this.getWaitTime();
         console.log(`[RateLimiter] Waiting ${waitTime}ms to avoid TPM limit`);
-        await this.sleep(waitTime);
+        // await this.sleep(waitTime);
         continue;
       }
 
