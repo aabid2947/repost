@@ -125,7 +125,7 @@ Maximum ${MAX_FILES_TO_SELECT} files. Focus on quality over quantity.`;
   try {
     const result = await geminiRateLimiter.enqueue(async () => {
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash-lite",
+        model: "ggemini-2.5-pro",
       });
       return await model.generateContent(selectionPrompt);
     }, estimateTokens(selectionPrompt));
@@ -335,7 +335,7 @@ Focus on:
 
   const result = await geminiRateLimiter.enqueue(async () => {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-lite",
+      model: "ggemini-2.0-pro",
       systemInstruction,
     });
     return await model.generateContent(userPrompt);
@@ -398,7 +398,7 @@ Rules:
 
         const routeResult = await geminiRateLimiter.enqueue(async () => {
           const routeModel = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash-lite",
+            model: "ggemini-2.0-pro",
           });
           return await routeModel.generateContent(routeAnalysisPrompt);
         }, estimatedRouteTokens);
