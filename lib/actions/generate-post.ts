@@ -6,7 +6,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { geminiRateLimiter, estimateTokens } from "@/lib/utils/gemini-rate-limiter";
 
 // Configuration constants
 const MAX_FILES_TO_SELECT = 30; // Maximum files to analyze
@@ -123,12 +122,10 @@ Return ONLY a JSON array of file paths, no explanation:
 Maximum ${MAX_FILES_TO_SELECT} files. Focus on quality over quantity.`;
 
   try {
-    const result = await geminiRateLimiter.enqueue(async () => {
-      const model = genAI.getGenerativeModel({
-        model: "ggemini-2.5-pro",
-      });
-      return await model.generateContent(selectionPrompt);
-    }, estimateTokens(selectionPrompt));
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+    });
+    const result = await model.generateContent(selectionPrompt);
 
     const responseText = result.response.text().trim();
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
@@ -328,18 +325,14 @@ Focus on:
 3. What makes it interesting or useful?
 4. Keep it accessible — less code talk, more impact talk`;
 
-  // === PHASE 5: Call Gemini with rate limiting ===
+  // === PHASE 5: Generate LinkedIn post with Gemini ===
   console.log("[generatePost] Phase 5: Generating LinkedIn post with Gemini...");
-  const estimatedPromptTokens = estimateTokens(systemInstruction + userPrompt);
-  console.log(`[generatePost] Estimated tokens: ${estimatedPromptTokens}`);
 
-  const result = await geminiRateLimiter.enqueue(async () => {
-    const model = genAI.getGenerativeModel({
-      model: "ggemini-2.0-pro",
-      systemInstruction,
-    });
-    return await model.generateContent(userPrompt);
-  }, estimatedPromptTokens);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction,
+  });
+  const result = await model.generateContent(userPrompt);
 
   const draft = result.response.text();
   console.log("[generatePost] LinkedIn post generated successfully");
@@ -394,14 +387,11 @@ Rules:
 
       try {
         console.log("[generatePost] Analyzing routes with Gemini...");
-        const estimatedRouteTokens = estimateTokens(routeAnalysisPrompt);
 
-        const routeResult = await geminiRateLimiter.enqueue(async () => {
-          const routeModel = genAI.getGenerativeModel({
-            model: "ggemini-2.0-pro",
-          });
-          return await routeModel.generateContent(routeAnalysisPrompt);
-        }, estimatedRouteTokens);
+        const routeModel = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+        });
+        const routeResult = await routeModel.generateContent(routeAnalysisPrompt);
 
         const routeText = routeResult.response.text().trim();
         console.log("[generatePost] Route analysis response received");
@@ -434,10 +424,6 @@ Rules:
       ];
     }
   }
-
-  // Log rate limiter stats
-  const stats = geminiRateLimiter.getStats();
-  console.log("[generatePost] Gemini Rate Limiter Stats:", stats);
 
   return {
     draft,
